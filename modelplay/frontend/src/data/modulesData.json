@@ -1,0 +1,172 @@
+{
+  "modules": [
+    {
+      "slug": "decision-trees",
+      "title": "Decision Trees",
+      "icon": "BrainCircuit",
+      "color": "purple",
+      "description": "Master the fundamental algorithms of data splitting. Learn visually with our interactive playground.",
+      "interactiveComponent": "DecisionTreePlayground",
+      "theory": [
+        {
+          "type": "paragraph",
+          "content": "A **Decision Tree** makes classifications by asking a sequential hierarchy of questions. Imagine playing \"20 Questions\" to identify an animal. You might ask: *\"Does it have fur?\"* If true, you travel down the left branch. If false, the right."
+        },
+        {
+          "type": "heading",
+          "content": "The Architecture of Choice"
+        },
+        {
+          "type": "paragraph",
+          "content": "Unlike humans, algorithms don't manually guess which questions to ask. Instead, they algorithmically evaluate every possible feature and slice the dataset at points that maximize the **Gini Impurity** drop or **Information Gain**."
+        },
+        {
+          "type": "callout",
+          "title": "Key Parameters",
+          "items": [
+            "**Max Depth:** Restricts the vertical progression of the tree. Endless depth results in a model that memorizes training data perfectly (Overfitting) but cannot generalize.",
+            "**Min Samples Split:** The minimum isolated points required to justify spinning up a new branch. A tighter constraint forces broader generalization."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": "You don't need to understand the underlying mathematics to wield the power of Decision Trees. You just need to understand the conceptual boundaries. When you constrain the geometry of a model, you alter its predictive universe."
+        }
+      ],
+      "quiz": [
+        {
+          "question": "What happens when you increase the Max Depth of a Decision Tree too much?",
+          "options": ["The model underfits", "The model overfits the training data", "The model refuses to train", "Training speed increases dramatically"],
+          "answer": 1
+        },
+        {
+          "question": "What metric does a Decision Tree typically use to decide where to split?",
+          "options": ["Mean Squared Error only", "Gini Impurity or Information Gain", "Euclidean Distance", "Cosine Similarity"],
+          "answer": 1
+        },
+        {
+          "question": "What is the role of 'Min Samples Split'?",
+          "options": ["It sets the learning rate", "It defines the minimum data points needed to create a new branch", "It controls the number of trees", "It normalizes the dataset"],
+          "answer": 1
+        }
+      ],
+      "badge": {
+        "title": "Tree Surgeon",
+        "icon": "🌳"
+      }
+    },
+    {
+      "slug": "k-means-clustering",
+      "title": "K-Means Clustering",
+      "icon": "Waypoints",
+      "color": "blue",
+      "description": "Discover how unsupervised algorithms group unlabeled data into meaningful clusters automatically.",
+      "interactiveComponent": "KMeansVisualizer",
+      "theory": [
+        {
+          "type": "paragraph",
+          "content": "Unlike Decision Trees, **K-Means Clustering** doesn't need labeled data. It's an *unsupervised* algorithm that discovers hidden structure by grouping similar data points into K clusters without being told what those groups should be."
+        },
+        {
+          "type": "heading",
+          "content": "The Algorithm in 4 Steps"
+        },
+        {
+          "type": "paragraph",
+          "content": "K-Means works through elegant simplicity: **1)** Randomly place K centroids. **2)** Assign every data point to its nearest centroid. **3)** Recalculate each centroid as the mean of its assigned points. **4)** Repeat steps 2-3 until centroids stabilize (convergence)."
+        },
+        {
+          "type": "callout",
+          "title": "Key Concepts",
+          "items": [
+            "**K (Number of Clusters):** The only hyperparameter. Choosing the right K is critical — too few clusters merge distinct groups, too many fragment coherent ones.",
+            "**Centroid:** The mathematical center of a cluster. Points are always assigned to the nearest centroid by Euclidean distance.",
+            "**Inertia:** The sum of squared distances from each point to its centroid. Lower inertia means tighter clusters."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": "K-Means is used everywhere: customer segmentation, image compression, anomaly detection, and even grouping galaxies. Its speed and simplicity make it one of the most deployed algorithms in production ML systems worldwide."
+        }
+      ],
+      "quiz": [
+        {
+          "question": "K-Means Clustering is what type of learning?",
+          "options": ["Supervised Learning", "Reinforcement Learning", "Unsupervised Learning", "Semi-supervised Learning"],
+          "answer": 2
+        },
+        {
+          "question": "What does the 'K' in K-Means represent?",
+          "options": ["The number of features", "The number of iterations", "The number of clusters", "The learning rate"],
+          "answer": 2
+        },
+        {
+          "question": "What metric does K-Means minimize?",
+          "options": ["Cross-entropy loss", "Inertia (sum of squared distances to centroids)", "Gini Impurity", "R-squared value"],
+          "answer": 1
+        }
+      ],
+      "badge": {
+        "title": "Cluster Commander",
+        "icon": "🎯"
+      }
+    },
+    {
+      "slug": "neural-network-basics",
+      "title": "Neural Network Basics",
+      "icon": "Cpu",
+      "color": "emerald",
+      "description": "Understand the building blocks of deep learning: neurons, layers, activation functions, and forward propagation.",
+      "interactiveComponent": null,
+      "theory": [
+        {
+          "type": "paragraph",
+          "content": "A **Neural Network** is a computational architecture inspired by the biological neurons in the human brain. At its core, it's a function that maps inputs to outputs through layers of interconnected nodes, each performing a simple linear transformation followed by a non-linear activation."
+        },
+        {
+          "type": "heading",
+          "content": "Anatomy of a Neuron"
+        },
+        {
+          "type": "paragraph",
+          "content": "A single artificial neuron computes: **output = activation(weights · inputs + bias)**. The *weights* determine how important each input is. The *bias* shifts the decision boundary. The *activation function* (like ReLU or Sigmoid) introduces non-linearity, enabling the network to learn complex patterns beyond simple lines."
+        },
+        {
+          "type": "callout",
+          "title": "Core Building Blocks",
+          "items": [
+            "**Input Layer:** Receives the raw feature data. Each node represents one feature dimension.",
+            "**Hidden Layers:** The computational engine. More layers = deeper network = ability to learn more abstract representations.",
+            "**Output Layer:** Produces the final prediction. For classification, often uses Softmax to output probabilities.",
+            "**Backpropagation:** The algorithm that computes gradients and adjusts weights to minimize prediction error, flowing backwards through the network."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": "Neural Networks power everything from image recognition (CNNs) to language models (Transformers). Understanding their fundamentals — forward propagation, loss computation, and gradient descent — is the gateway to modern AI engineering."
+        }
+      ],
+      "quiz": [
+        {
+          "question": "What does an activation function do in a neural network?",
+          "options": ["Normalizes the dataset", "Introduces non-linearity", "Reduces the number of parameters", "Compresses the input data"],
+          "answer": 1
+        },
+        {
+          "question": "What is backpropagation?",
+          "options": ["A data augmentation technique", "An algorithm to compute gradients and update weights", "A method to initialize weights", "A regularization technique"],
+          "answer": 1
+        },
+        {
+          "question": "What does the Softmax function output?",
+          "options": ["Raw neuron activations", "Binary values (0 or 1)", "A probability distribution across classes", "Gradient values for backpropagation"],
+          "answer": 2
+        }
+      ],
+      "badge": {
+        "title": "Neural Architect",
+        "icon": "🧠"
+      }
+    }
+  ]
+}

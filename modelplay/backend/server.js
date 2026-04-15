@@ -10,12 +10,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => console.log('MongoDB Connected successfully!'))
-  .catch(err => console.error('MongoDB connection error. Ensure MongoDB is running or update MONGO_URI in .env:', err.message));
+const { MongoMemoryServer } = require('mongodb-memory-server');
+
+// Initialize MongoDB
+const connectDB = async () => {
+    try {
+        const mongoServer = await MongoMemoryServer.create();
+        const mongoUri = mongoServer.getUri();
+        await mongoose.connect(mongoUri);
+        console.log('MongoDB Memory Server Connected successfully!');
+    } catch (err) {
+        console.error('MongoDB connection error:', err.message);
+    }
+};
+
+connectDB();
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -43,6 +52,55 @@ app.post('/api/progress', authMiddleware, async (req, res) => {
             await user.save();
         }
         res.json({ message: 'Progress updated', progress: user.completed_modules });
+    } catch (err) {
+        res.status(500).send('Server Error');
+    }
+});
+
+// Quiz completion endpoint
+app.post('/api/quiz/complete', authMiddleware, async (req, res) => {
+    try {
+        const { module, score, badge } = req.body;
+        const user = await User.findById(req.user.userId);
+
+        if (!user.completed_modules.includes(module)) {
+            user.completed_modules.push(module);
+        }
+
+        // Award badge if not already earned
+        const hasBadge = user.badges.some(b => b.title === badge.title);
+        if (!hasBadge) {
+            user.badges.push({ title: badge.title, icon: badge.icon, date_earned: new Date() });
+        }
+
+        // Increment streak
+        user.current_streak = (user.current_streak || 0) + 1;
+        await user.save();
+
+        res.json({ message: 'Quiz completed!', user: { completed_modules: user.completed_modules, badges: user.badges, current_streak: user.current_streak } });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Leaderboard endpoint
+app.get('/api/leaderboard', async (req, res) => {
+    try {
+        const users = await User.find()
+            .select('username completed_modules badges current_streak')
+            .sort({ 'completed_modules': -1 })
+            .limit(50);
+
+        const leaderboard = users.map((u, i) => ({
+            rank: i + 1,
+            username: u.username,
+            modulesCompleted: u.completed_modules.length,
+            badgeCount: u.badges.length,
+            streak: u.current_streak
+        }));
+
+        res.json(leaderboard);
     } catch (err) {
         res.status(500).send('Server Error');
     }

@@ -1,115 +1,144 @@
 import React, { useState, useEffect } from 'react';
+import Plot from 'react-plotly.js';
 import axios from 'axios';
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { motion } from 'framer-motion';
+
+// Custom useDebounce hook
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => { setDebouncedValue(value); }, delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 export default function MiniGame() {
-    const [maxDepth, setMaxDepth] = useState(2);
-    const [minSamples, setMinSamples] = useState(2);
-    const [data, setData] = useState([]);
-    const [gridPoints, setGridPoints] = useState([]);
-    const [loading, setLoading] = useState(false);
-
+    const [maxDepth, setMaxDepth] = useState(3);
+    const [minSamples, setMinSamples] = useState(5);
+    const debouncedMaxDepth = useDebounce(maxDepth, 200);
+    const debouncedMinSamples = useDebounce(minSamples, 200);
+    
+    const [plotData, setPlotData] = useState([]);
+    
     useEffect(() => {
-        // Fetch dummy dataset initially
-        axios.get('http://localhost:8000/api/data')
-            .then(res => {
-                const formatted = res.data.X.map((point, i) => ({
-                    x: point[0],
-                    y: point[1],
-                    class: res.data.y[i]
-                }));
-                setData(formatted);
-            })
-            .catch(err => console.error("Error fetching data.", err));
-    }, []);
-
-    useEffect(() => {
-        setLoading(true);
-        axios.post('http://localhost:8000/api/train', {
-            max_depth: maxDepth,
-            min_samples_split: minSamples
-        })
-        .then(res => {
-            const { x_min, x_max, y_min, y_max, step, grid_Z } = res.data;
-            const points = [];
-            // Parse grid into sparse array for Recharts or just ignore Recharts boundary rendering for exactness and use color zones.
-            // For MVP, we will extract boundary decision points to visually show them:
-            for(let i=0; i<grid_Z.length; i+=3) {
-                for(let j=0; j<grid_Z[i].length; j+=3) {
-                    points.push({
-                        bg_x: x_min + j * step,
-                        bg_y: y_min + i * step,
-                        z: grid_Z[i][j]
-                    });
-                }
+        const fetchBoundary = async () => {
+            try {
+                const res = await axios.post('http://localhost:8000/api/predict-boundary', {
+                    max_depth: debouncedMaxDepth,
+                    min_samples_split: debouncedMinSamples
+                });
+                
+                const { data_points, grid } = res.data;
+                
+                // Construct Plotly data
+                const contour = {
+                    z: grid.z,
+                    x: grid.xx[0], // 1D array of x coordinates
+                    y: grid.yy.map(row => row[0]), // 1D array of y coordinates
+                    type: 'contour',
+                    colorscale: [[0, '#fecaca'], [1, '#bfdbfe']], // Red to Blue matching scatter
+                    showscale: false,
+                    opacity: 0.6,
+                    line: { width: 0 },
+                    hoverinfo: 'skip'
+                };
+                
+                // Scatter for Class 0
+                const scatter0 = {
+                    x: data_points.x.filter((_, i) => data_points.classes[i] === 0),
+                    y: data_points.y.filter((_, i) => data_points.classes[i] === 0),
+                    mode: 'markers',
+                    type: 'scatter',
+                    name: 'Class 0',
+                    marker: { color: '#ef4444', size: 10, line: { color: 'white', width: 1.5 } }
+                };
+                
+                // Scatter for Class 1
+                const scatter1 = {
+                    x: data_points.x.filter((_, i) => data_points.classes[i] === 1),
+                    y: data_points.y.filter((_, i) => data_points.classes[i] === 1),
+                    mode: 'markers',
+                    type: 'scatter',
+                    name: 'Class 1',
+                    marker: { color: '#3b82f6', size: 10, line: { color: 'white', width: 1.5 } }
+                };
+                
+                setPlotData([contour, scatter0, scatter1]);
+            } catch (err) {
+                console.error("Error fetching boundary", err);
             }
-            setGridPoints(points);
-            setLoading(false);
-        })
-        .catch(err => {
-            console.error("Backend error", err);
-            setLoading(false);
-        });
-    }, [maxDepth, minSamples]);
+        };
+        fetchBoundary();
+    }, [debouncedMaxDepth, debouncedMinSamples]);
 
     return (
-        <div className="p-8 max-w-6xl mx-auto w-full flex gap-8">
-            <div className="w-1/3 bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col gap-6 h-fit">
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-1">Hyperparameter Tuning</h2>
-                    <p className="text-gray-500 text-sm">Adjust settings to see how the decision boundary changes.</p>
-                </div>
+        <div className="min-h-screen bg-slate-900 text-white p-8 font-sans">
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-12 text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">
+                Decision Tree Playground
+            </h1>
+            <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-10">
+                {/* Left Panel: Controls */}
+                <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="w-full md:w-1/3 bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 p-8 rounded-[2rem] shadow-2xl h-fit"
+                >
+                    <h3 className="text-2xl font-bold mb-8 flex items-center gap-3">
+                        <span className="text-purple-400 text-3xl">⚙️</span> Properties
+                    </h3>
+                    
+                    <div className="mb-10">
+                        <div className="flex justify-between mb-4">
+                            <label className="text-sm font-bold text-slate-400 uppercase tracking-widest">Max Depth</label>
+                            <span className="text-purple-400 font-bold bg-purple-500/20 px-3 py-1 rounded-xl">{maxDepth}</span>
+                        </div>
+                        <input 
+                            type="range" min="1" max="10" 
+                            value={maxDepth} onChange={(e) => setMaxDepth(parseInt(e.target.value))}
+                            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                        />
+                        <p className="text-xs text-slate-500 mt-4 leading-relaxed font-medium">Controls the maximum number of splits strings. Deeper trees fit the training data tighter but might overfit.</p>
+                    </div>
 
-                <div>
-                    <label className="flex justify-between text-sm font-bold text-gray-700 mb-2">
-                        Max Depth: <span className="text-indigo-600">{maxDepth}</span>
-                    </label>
-                    <input 
-                        type="range" min="1" max="10" 
-                        value={maxDepth} onChange={(e) => setMaxDepth(parseInt(e.target.value))}
-                        className="w-full accent-indigo-600"
+                    <div>
+                        <div className="flex justify-between mb-4">
+                            <label className="text-sm font-bold text-slate-400 uppercase tracking-widest">Min Samples Split</label>
+                            <span className="text-blue-400 font-bold bg-blue-500/20 px-3 py-1 rounded-xl">{minSamples}</span>
+                        </div>
+                        <input 
+                            type="range" min="2" max="20" 
+                            value={minSamples} onChange={(e) => setMinSamples(parseInt(e.target.value))}
+                            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                        />
+                        <p className="text-xs text-slate-500 mt-4 leading-relaxed font-medium">Minimum points required to split an internal node. Higher values aggressively prevent overfitting by forcing broader decisions.</p>
+                    </div>
+                </motion.div>
+
+                {/* Right Panel: The Canvas */}
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="w-full md:w-2/3 bg-slate-50 p-4 rounded-[2rem] shadow-[0_0_40px_rgba(59,130,246,0.1)] border border-slate-700/50 flex justify-center items-center"
+                >
+                    <Plot
+                        data={plotData}
+                        layout={{
+                            title: { text: 'Predictive Boundary Landscape', font: { family: 'Inter, sans-serif', size: 18, color: '#334155' } },
+                            font: { family: 'Inter, sans-serif' },
+                            width: 800,
+                            height: 600,
+                            margin: { l: 50, r: 50, b: 50, t: 80 },
+                            xaxis: { showgrid: false, zeroline: false, showticklabels: false },
+                            yaxis: { showgrid: false, zeroline: false, showticklabels: false },
+                            paper_bgcolor: 'rgba(0,0,0,0)',
+                            plot_bgcolor: 'rgba(0,0,0,0)',
+                            hovermode: 'closest',
+                            dragmode: false
+                        }}
+                        config={{ displayModeBar: false, responsive: true }}
                     />
-                    <p className="text-xs text-gray-400 mt-1">Controls how deep the tree can grow.</p>
-                </div>
-
-                <div>
-                    <label className="flex justify-between text-sm font-bold text-gray-700 mb-2">
-                        Min Samples Split: <span className="text-indigo-600">{minSamples}</span>
-                    </label>
-                    <input 
-                        type="range" min="2" max="20" 
-                        value={minSamples} onChange={(e) => setMinSamples(parseInt(e.target.value))}
-                        className="w-full accent-indigo-600"
-                    />
-                    <p className="text-xs text-gray-400 mt-1">Minimum samples needed to split an internal node.</p>
-                </div>
-            </div>
-
-            <div className="w-2/3 bg-white p-6 rounded-2xl shadow-lg border border-gray-100 h-[600px] flex flex-col relative">
-                <h3 className="text-xl font-bold mb-4 font-sans text-center">Decision Boundary Visualization</h3>
-                {loading && <div className="absolute inset-0 bg-white/70 flex items-center justify-center font-bold text-indigo-600 z-10">Training Model...</div>}
-                <div className="flex-1 relative">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis type="number" dataKey="x" name="X" domain={[-4, 4]} />
-                            <YAxis type="number" dataKey="y" name="Y" domain={[-4, 4]} />
-                            <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} />
-                            
-                            {/* Background Boundary Points */}
-                            <Scatter data={gridPoints} shape="square" dataKey="bg_y" 
-                                fill={(entry) => entry.z === 1 ? '#bfdbfe' : '#fecaca'} 
-                                fillOpacity={0.4} 
-                                isAnimationActive={false} />
-
-                            <Scatter name="Class 0" data={data.filter(d => d.class === 0)} fill="#ef4444" />
-                            <Scatter name="Class 1" data={data.filter(d => d.class === 1)} fill="#3b82f6" />
-                        </ScatterChart>
-                    </ResponsiveContainer>
-                </div>
-                <div className="mt-4 text-center text-sm text-gray-500 font-medium">
-                    Blue and Red areas represent the model's decision zones
-                </div>
+                </motion.div>
             </div>
         </div>
     );

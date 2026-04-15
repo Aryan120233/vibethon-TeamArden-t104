@@ -3,7 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.datasets import make_classification
+from sklearn.datasets import make_moons, make_blobs
+from sklearn.cluster import KMeans
 
 app = FastAPI(title="ModelPlay ML Service")
 
@@ -15,41 +16,63 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class TreeParameters(BaseModel):
+# ─── Decision Tree Dataset ───
+X_dt, y_dt = make_moons(n_samples=300, noise=0.3, random_state=42)
+
+class PredictRequest(BaseModel):
     max_depth: int
     min_samples_split: int
 
-# Generate a dummy 2D dataset
-X, y = make_classification(n_samples=200, n_features=2, n_informative=2, n_redundant=0, 
-                           n_clusters_per_class=1, random_state=42)
-
-@app.get("/api/data")
-def get_data():
-    return {
-        "X": X.tolist(),
-        "y": y.tolist()
-    }
-
-@app.post("/api/train")
-def train_tree(params: TreeParameters):
-    clf = DecisionTreeClassifier(max_depth=params.max_depth, min_samples_split=params.min_samples_split, random_state=42)
-    clf.fit(X, y)
+@app.post("/api/predict-boundary")
+def predict_boundary(req: PredictRequest):
+    clf = DecisionTreeClassifier(
+        max_depth=req.max_depth, 
+        min_samples_split=req.min_samples_split, 
+        random_state=42
+    )
+    clf.fit(X_dt, y_dt)
     
-    # Create a meshgrid to plot the decision boundary
-    x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-    y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-    xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
-                         np.arange(y_min, y_max, 0.1))
+    x_min, x_max = X_dt[:, 0].min() - 0.5, X_dt[:, 0].max() + 0.5
+    y_min, y_max = X_dt[:, 1].min() - 0.5, X_dt[:, 1].max() + 0.5
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.05),
+                         np.arange(y_min, y_max, 0.05))
     
     Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
     Z = Z.reshape(xx.shape)
     
-    # We will return the grid definition and the predicted z matrix
     return {
-        "x_min": float(x_min),
-        "x_max": float(x_max),
-        "y_min": float(y_min),
-        "y_max": float(y_max),
-        "step": 0.1,
-        "grid_Z": Z.tolist()
+        "data_points": {
+            "x": X_dt[:, 0].tolist(),
+            "y": X_dt[:, 1].tolist(),
+            "classes": y_dt.tolist()
+        },
+        "grid": {
+            "xx": xx.tolist(),
+            "yy": yy.tolist(),
+            "z": Z.tolist()
+        }
+    }
+
+# ─── K-Means Clustering Dataset ───
+X_km, _ = make_blobs(n_samples=300, centers=5, n_features=2, random_state=42)
+
+class ClusterRequest(BaseModel):
+    num_clusters: int
+
+@app.post("/api/cluster")
+def cluster_data(req: ClusterRequest):
+    kmeans = KMeans(n_clusters=req.num_clusters, random_state=42, n_init=10)
+    labels = kmeans.fit_predict(X_km)
+    centroids = kmeans.cluster_centers_
+    
+    return {
+        "data_points": {
+            "x": X_km[:, 0].tolist(),
+            "y": X_km[:, 1].tolist(),
+            "labels": labels.tolist()
+        },
+        "centroids": {
+            "x": centroids[:, 0].tolist(),
+            "y": centroids[:, 1].tolist()
+        }
     }
