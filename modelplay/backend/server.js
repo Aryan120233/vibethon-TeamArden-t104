@@ -106,7 +106,33 @@ app.get('/api/leaderboard', async (req, res) => {
     }
 });
 
+// Game score submission endpoint
+app.post('/api/game/score', authMiddleware, async (req, res) => {
+    try {
+        const decoded = JSON.parse(Buffer.from(req.body.payload, 'base64').toString());
+        const score = decoded.score;
+        const user = await User.findById(req.user.userId);
+
+        // Award "Algorithm Speedster" badge for 10k+
+        if (score >= 10000) {
+            const hasBadge = user.badges.some(b => b.title === 'Algorithm Speedster');
+            if (!hasBadge) {
+                user.badges.push({ title: 'Algorithm Speedster', icon: '⚡', date_earned: new Date() });
+            }
+        }
+
+        user.current_streak = (user.current_streak || 0) + 1;
+        await user.save();
+
+        res.json({ message: 'Score recorded', score, badges: user.badges });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`ModelPlay Node Backend running securely on http://localhost:${PORT}`);
 });
+

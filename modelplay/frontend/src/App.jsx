@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard';
 import ModulePage from './pages/ModulePage';
 import MiniGame from './pages/MiniGame';
 import Quiz from './pages/Quiz';
+import DataDash from './pages/DataDash';
+import CentroidSwarm from './pages/CentroidSwarm';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -27,6 +29,8 @@ function App() {
                     <Route path="/learn/:slug" element={<PrivateRoute><ModulePage /></PrivateRoute>} />
                     <Route path="/play/decision-trees" element={<PrivateRoute><MiniGame /></PrivateRoute>} />
                     <Route path="/play/k-means-clustering" element={<PrivateRoute><KMeansPage /></PrivateRoute>} />
+                    <Route path="/play/data-dash" element={<PrivateRoute><DataDash /></PrivateRoute>} />
+                    <Route path="/play/centroid-swarm" element={<PrivateRoute><CentroidSwarm /></PrivateRoute>} />
                     <Route path="/quiz/:slug" element={<PrivateRoute><Quiz /></PrivateRoute>} />
                     <Route path="/" element={<Navigate to="/auth" />} />
                 </Routes>
