@@ -3,6 +3,7 @@ import useGameLoop from '../game/useGameLoop';
 import { ParticleEmitter } from '../game/Particle';
 import { AuthContext } from '../context/AuthContext';
 import TutorialOverlay from '../components/TutorialOverlay';
+import { API_URL } from '../utils/api';
 import axios from 'axios';
 
 // ─── Constants ───
@@ -133,7 +134,7 @@ export default function CentroidSwarm() {
             // Submit score
             try {
                 const pct = Math.round((counts[0] / NUM_POINTS) * 100);
-                axios.post('http://localhost:5000/api/game/score', {
+                axios.post(`${API_URL}/api/game/score`, {
                     payload: btoa(JSON.stringify({ score: pct * 100, ts: Date.now(), h: ((pct * 7 + 42) ^ 0xBEEF).toString(16) }))
                 }, { headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
             } catch(e) {}

@@ -3,6 +3,7 @@ import useGameLoop from '../game/useGameLoop';
 import { ParticleEmitter } from '../game/Particle';
 import { AuthContext } from '../context/AuthContext';
 import TutorialOverlay from '../components/TutorialOverlay';
+import { API_URL } from '../utils/api';
 import axios from 'axios';
 
 // ─── Constants ───
@@ -114,7 +115,7 @@ export default function DataDash() {
     const submitScore = useCallback(async (s) => {
         try {
             const payload = btoa(JSON.stringify({ score: s, ts: Date.now(), h: ((s * 7 + 42) ^ 0xDEAD).toString(16) }));
-            await axios.post('http://localhost:5000/api/game/score', { payload }, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.post(`${API_URL}/api/game/score`, { payload }, { headers: { Authorization: `Bearer ${token}` } });
         } catch (err) { console.error('Score submit failed', err); }
     }, [token]);
 

@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Medal, Flame } from 'lucide-react';
 import axios from 'axios';
+import { API_URL } from '../utils/api';
 
 export default function Leaderboard() {
     const [leaders, setLeaders] = useState([]);
 
     useEffect(() => {
-        axios.get('http://localhost:5000/api/leaderboard')
+        axios.get(`${API_URL}/api/leaderboard`)
             .then(res => setLeaders(res.data))
             .catch(err => console.error(err));
     }, []);

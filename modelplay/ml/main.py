@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -8,9 +9,11 @@ from sklearn.cluster import KMeans
 
 app = FastAPI(title="ModelPlay ML Service")
 
+# CORS — allow frontend origin in production, all origins in dev
+allowed_origins = os.getenv("FRONTEND_URL", "*")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[allowed_origins] if allowed_origins != "*" else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Plot from 'react-plotly.js';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import { ML_URL } from '../utils/api';
 
 function useDebounce(value, delay) {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -22,7 +23,7 @@ export default function KMeansVisualizer() {
     useEffect(() => {
         const fetchClusters = async () => {
             try {
-                const res = await axios.post('http://localhost:8000/api/cluster', { num_clusters: debouncedK });
+                const res = await axios.post(`${ML_URL}/api/cluster`, { num_clusters: debouncedK });
                 const { data_points, centroids } = res.data;
 
                 // Group points by cluster label

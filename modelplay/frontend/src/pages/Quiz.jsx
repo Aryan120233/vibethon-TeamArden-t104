@@ -5,6 +5,7 @@ import { CheckCircle, XCircle, ArrowRight } from 'lucide-react';
 import { getModuleBySlug } from '../utils/contentLoader';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
+import { API_URL } from '../utils/api';
 import axios from 'axios';
 
 export default function Quiz() {
@@ -47,7 +48,7 @@ export default function Quiz() {
             setQuizDone(true);
             if (score + (selected === q.answer ? 1 : 0) >= Math.ceil(quiz.length * 0.5)) {
                 try {
-                    await axios.post('http://localhost:5000/api/quiz/complete', {
+                    await axios.post(`${API_URL}/api/quiz/complete`, {
                         module: slug, score, badge: mod.badge
                     }, { headers: { Authorization: `Bearer ${token}` } });
                 } catch (err) { console.error('Failed to save progress', err); }

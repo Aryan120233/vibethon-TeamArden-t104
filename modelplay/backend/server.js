@@ -7,20 +7,31 @@ const authMiddleware = require('./middleware/authMiddleware');
 const User = require('./models/User');
 
 const app = express();
-app.use(cors());
+
+// CORS — allow frontend origin in production, all origins in dev
+app.use(cors({
+    origin: process.env.FRONTEND_URL || '*',
+    credentials: true
+}));
 app.use(express.json());
 
-const { MongoMemoryServer } = require('mongodb-memory-server');
-
-// Initialize MongoDB
+// ─── MongoDB Connection ───
 const connectDB = async () => {
     try {
-        const mongoServer = await MongoMemoryServer.create();
-        const mongoUri = mongoServer.getUri();
-        await mongoose.connect(mongoUri);
-        console.log('MongoDB Memory Server Connected successfully!');
+        if (process.env.MONGO_URI) {
+            // Production: real MongoDB Atlas 
+            await mongoose.connect(process.env.MONGO_URI);
+            console.log('MongoDB Atlas Connected successfully!');
+        } else {
+            // Dev fallback: in-memory server
+            const { MongoMemoryServer } = require('mongodb-memory-server');
+            const mongoServer = await MongoMemoryServer.create();
+            await mongoose.connect(mongoServer.getUri());
+            console.log('MongoDB Memory Server Connected (dev mode)');
+        }
     } catch (err) {
         console.error('MongoDB connection error:', err.message);
+        process.exit(1);
     }
 };
 
@@ -133,6 +144,5 @@ app.post('/api/game/score', authMiddleware, async (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`ModelPlay Node Backend running securely on http://localhost:${PORT}`);
+    console.log(`ModelPlay Backend running on port ${PORT}`);
 });
-

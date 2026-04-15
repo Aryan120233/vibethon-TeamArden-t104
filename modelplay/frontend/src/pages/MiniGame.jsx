@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Plot from 'react-plotly.js';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import { ML_URL } from '../utils/api';
 
 // Custom useDebounce hook
 function useDebounce(value, delay) {
@@ -24,7 +25,7 @@ export default function MiniGame() {
     useEffect(() => {
         const fetchBoundary = async () => {
             try {
-                const res = await axios.post('http://localhost:8000/api/predict-boundary', {
+                const res = await axios.post(`${ML_URL}/api/predict-boundary`, {
                     max_depth: debouncedMaxDepth,
                     min_samples_split: debouncedMinSamples
                 });
